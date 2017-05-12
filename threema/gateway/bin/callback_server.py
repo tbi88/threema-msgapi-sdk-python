@@ -2,6 +2,7 @@
 The command line interface for the Threema Gateway Callback Server.
 """
 import asyncio
+import binascii
 import functools
 
 import click
@@ -64,8 +65,11 @@ def aio_serve(close_func):
 @click.option('-v', '--verbosity', type=click.IntRange(0, len(_logging_levels)),
               default=0, help="Logging verbosity.")
 @click.option('-c', '--colored', is_flag=True, help='Colourise logging output.')
+@click.option('-vf', '--verify-fingerprint', is_flag=True,
+              help='Verify the certificate fingerprint.')
+@click.option('--fingerprint', type=str, help='A hex-encoded fingerprint.')
 @click.pass_context
-def cli(ctx, verbosity, colored):
+def cli(ctx, verbosity, colored, verify_fingerprint, fingerprint):
     """
     Command Line Interface. Use --help for details.
     """
@@ -84,6 +88,16 @@ def cli(ctx, verbosity, colored):
         handler.push_application()
         global _logging_handler
         _logging_handler = handler
+
+    # Fingerprint
+    if fingerprint is not None:
+        fingerprint = binascii.unhexlify(fingerprint)
+
+    # Store on context
+    ctx.obj = {
+        'verify_fingerprint': verify_fingerprint,
+        'fingerprint': fingerprint
+    }
 
     # Create context object
     ctx.obj = {}
@@ -118,8 +132,9 @@ Path to a file that contains the private key. Will be read from
 CERTFILE if not present.""")
 @click.option('-h', '--host', help='Bind to a specific host.')
 @click.option('-p', '--port', default=443, help='Listen on a specific port.')
+@click.pass_context
 @aio_serve(close_server)
-def serve(**arguments):
+def serve(ctx, **arguments):
     # Get arguments
     identity = arguments['identity']
     secret = arguments['secret']
@@ -130,7 +145,7 @@ def serve(**arguments):
     port = arguments['port']
 
     # Create connection and callback instances
-    connection = Connection(identity=identity, secret=secret, key=private_key)
+    connection = Connection(identity=identity, secret=secret, key=private_key, **ctx.obj)
     callback = Callback(connection)
 
     # Create server
