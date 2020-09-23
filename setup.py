@@ -57,7 +57,7 @@ setup(
         'py_lru_cache>=0.1.4,<0.2',
         'logbook>=1.1.0,<2',
         'libnacl>=1.5.2,<2',
-        'click>=6.7,<7',  # doesn't seem to follow semantic versioning
+        'click>=7.1.2,<7.2',  # doesn't seem to follow semantic versioning
         'aiohttp>=2.3.10,<3',
         'wrapt>=1.10.10,<2',
     ],
